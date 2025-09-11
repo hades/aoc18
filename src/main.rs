@@ -1,6 +1,7 @@
 mod aocclient;
 mod autosubmit;
 mod day01;
+mod day02;
 mod solver;
 
 use std::env;
@@ -27,6 +28,8 @@ struct Args {
 fn solver_for_day(day: i8) -> Option<Box<dyn Solver>> {
     match day {
         1 => Some(Box::new(day01::solver())),
+        2 => Some(Box::new(day02::solver())),
+        3 => Some(Box::new(day02::solver())),
         _ => None,
     }
 }
