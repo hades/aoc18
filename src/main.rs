@@ -2,6 +2,7 @@ mod aocclient;
 mod autosubmit;
 mod day01;
 mod day02;
+mod day03;
 mod solver;
 
 use std::env;
@@ -31,7 +32,7 @@ fn solver_for_day(day: i8) -> Option<Box<dyn Solver>> {
     match day {
         1 => Some(Box::new(day01::solver())),
         2 => Some(Box::new(day02::solver())),
-        3 => Some(Box::new(day02::solver())),
+        3 => Some(Box::new(day03::solver())),
         _ => None,
     }
 }
@@ -89,8 +90,8 @@ fn main() {
             if args.submit {
                 log::info!("submitting part two...");
                 let result = autosubmit::submit_with_cache(day, 2, answer.as_str(), |d, l, a| {
-                        client.submit_answer(d, l, a).unwrap()
-                    });
+                    client.submit_answer(d, l, a).unwrap()
+                });
                 log::info!("part one submission result: {result:?}");
             }
         }
