@@ -6,6 +6,7 @@ mod solver;
 
 use std::env;
 
+use autosubmit::next_unsolved_day;
 use clap::Parser;
 
 use solver::Solver;
@@ -22,7 +23,8 @@ struct Args {
     #[arg(short, long)]
     part_two_only: bool,
 
-    day: i8,
+    #[arg(short, long)]
+    day: Option<i8>,
 }
 
 fn solver_for_day(day: i8) -> Option<Box<dyn Solver>> {
@@ -51,16 +53,21 @@ fn main() {
         log::warn!("you must specify the session cookie with --cookie or AOC_COOKIE env variable");
         return;
     }
-    let solver = solver_for_day(args.day);
+    let day = if let Some(day) = args.day {
+        day
+    } else {
+        next_unsolved_day()
+    };
+    let solver = solver_for_day(day);
     if solver.is_none() {
-        log::error!("this solver cannot solve day {}", args.day);
+        log::error!("this solver cannot solve day {}", day);
         return;
     }
     let mut solver = solver.unwrap();
     let solver = solver.as_mut();
-    log::info!("solving Advent of Code day {}", args.day);
+    log::info!("solving Advent of Code day {}", day);
     log::info!("retrieving puzzle input...");
-    match client.get_puzzle_input(args.day) {
+    match client.get_puzzle_input(day) {
         Ok(input) => {
             solver.presolve(input.as_str());
             if !args.part_two_only {
@@ -70,7 +77,7 @@ fn main() {
                 if args.submit {
                     log::info!("submitting part one...");
                     let result =
-                        autosubmit::submit_with_cache(args.day, 1, answer.as_str(), |d, l, a| {
+                        autosubmit::submit_with_cache(day, 1, answer.as_str(), |d, l, a| {
                             client.submit_answer(d, l, a).unwrap()
                         });
                     log::info!("part one submission result: {result:?}");
@@ -81,8 +88,7 @@ fn main() {
             log::info!("part two answer: {answer}");
             if args.submit {
                 log::info!("submitting part two...");
-                let result =
-                    autosubmit::submit_with_cache(args.day, 2, answer.as_str(), |d, l, a| {
+                let result = autosubmit::submit_with_cache(day, 2, answer.as_str(), |d, l, a| {
                         client.submit_answer(d, l, a).unwrap()
                     });
                 log::info!("part one submission result: {result:?}");
