@@ -143,14 +143,13 @@ pub fn next_unsolved_day() -> i8 {
     let mut last_fully_solved_day = 0;
     if let Some(submission_log) = read_submission_log() {
         for day in 1..24 {
-            if submission_log
-                .answers
-                .contains_key(puzzle_key(day, 1).as_str())
-                && submission_log
-                    .answers
-                    .contains_key(puzzle_key(day, 2).as_str())
-            {
-                last_fully_solved_day = day;
+            if let (Some(part1), Some(part2)) = (
+                submission_log.answers.get(puzzle_key(day, 1).as_str()),
+                submission_log.answers.get(puzzle_key(day, 2).as_str()),
+            ) {
+                if part1.accepted_answer.is_some() && part2.accepted_answer.is_some() {
+                    last_fully_solved_day = day;
+                }
             }
         }
     }
