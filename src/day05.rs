@@ -33,8 +33,8 @@ impl Solver for PuzzleSolver {
     }
 
     fn solve_part_two(&mut self) -> String {
-        let mut min = std::usize::MAX;
-        for remove in 'a'..'z' {
+        let mut min = usize::MAX;
+        for remove in 'a'..='z' {
             let mut string: Vec<_> = self
                 .input
                 .chars()

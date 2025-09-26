@@ -19,7 +19,7 @@ fn sum(input: &[isize]) -> (isize, usize) {
     for i in 0..metadata_count {
         metadata_sum += input[2 + children_size + i];
     }
-    return (metadata_sum, 2 + children_size + metadata_count);
+    (metadata_sum, 2 + children_size + metadata_count)
 }
 
 fn sum_b(input: &[isize]) -> (isize, usize) {
@@ -45,7 +45,7 @@ fn sum_b(input: &[isize]) -> (isize, usize) {
             }
         }
     }
-    return (metadata_sum, 2 + children_size + metadata_count);
+    (metadata_sum, 2 + children_size + metadata_count)
 }
 
 impl Solver for PuzzleSolver {

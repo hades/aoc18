@@ -1,4 +1,4 @@
-use std::{collections::BTreeSet, iter::repeat};
+use std::{collections::BTreeSet, iter::repeat_n};
 
 use itertools::Itertools;
 use regex::Regex;
@@ -59,7 +59,7 @@ impl Solver for PuzzleSolver {
                             .count()
                             == 0
                     })
-                    .map(|&s| s)
+                    .copied()
                     .filter(|s| !operation_order.contains(s)),
             );
         }
@@ -73,7 +73,7 @@ impl Solver for PuzzleSolver {
                 .iter()
                 .flat_map(|(a, b)| [a.as_str(), b.as_str()].into_iter()),
         );
-        let mut worker_jobs: Vec<_> = repeat(None).take(self.worker_count).collect();
+        let mut worker_jobs: Vec<_> = repeat_n(None, self.worker_count).collect();
         let mut scheduled_nodes: BTreeSet<&str> = BTreeSet::new();
         for node in all_nodes.iter().cloned() {
             if remaining_edges
@@ -81,13 +81,10 @@ impl Solver for PuzzleSolver {
                 .filter(|(_, dependant)| dependant.as_str() == node)
                 .count()
                 == 0
+                && let Some(next_free_worker) = worker_jobs.iter_mut().find(|job| job.is_none())
             {
-                if let Some(next_free_worker) =
-                    worker_jobs.iter_mut().filter(|job| job.is_none()).next()
-                {
-                    *next_free_worker = Some((node, 0));
-                    scheduled_nodes.insert(node);
-                }
+                *next_free_worker = Some((node, 0));
+                scheduled_nodes.insert(node);
             }
         }
         let mut t = 0;
@@ -118,13 +115,10 @@ impl Solver for PuzzleSolver {
                     .filter(|(dependency, _)| !finished_nodes.contains(dependency.as_str()))
                     .count()
                     == 0
+                    && let Some(next_free_worker) = worker_jobs.iter_mut().find(|job| job.is_none())
                 {
-                    if let Some(next_free_worker) =
-                        worker_jobs.iter_mut().filter(|job| job.is_none()).next()
-                    {
-                        *next_free_worker = Some((node, t));
-                        scheduled_nodes.insert(node);
-                    }
+                    *next_free_worker = Some((node, t));
+                    scheduled_nodes.insert(node);
                 }
             }
         }

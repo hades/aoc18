@@ -1,4 +1,4 @@
-use std::{collections::HashSet, iter::repeat};
+use std::{collections::HashSet, iter::repeat_n};
 
 use itertools::Itertools;
 use log::debug;
@@ -35,7 +35,7 @@ impl Solver for PuzzleSolver {
             top = std::cmp::min(top, *y);
             bottom = std::cmp::max(bottom, *y);
         }
-        let mut areas_by_idx: Vec<_> = repeat(0usize).take(self.input.len()).collect();
+        let mut areas_by_idx: Vec<_> = repeat_n(0usize, self.input.len()).collect();
         for x in left..=right {
             for y in top..=bottom {
                 if let Ok((closest_idx, _)) = self

@@ -8,7 +8,6 @@ use std::thread::sleep;
 use log::debug;
 use serde::Deserialize;
 use serde::Serialize;
-use toml;
 
 const FILE: &str = "results.toml";
 
@@ -50,15 +49,15 @@ fn check_submission_log(day: i8, level: i8, answer: &str) -> Option<ValidationRe
             });
         }
         if let Ok(answer_int) = answer.parse::<i64>() {
-            if let Some(upper_bound) = entry.upper_bound {
-                if answer_int >= upper_bound {
-                    return Some(ValidationResult::RejectedTooHigh);
-                }
+            if let Some(upper_bound) = entry.upper_bound
+                && answer_int >= upper_bound
+            {
+                return Some(ValidationResult::RejectedTooHigh);
             }
-            if let Some(lower_bound) = entry.lower_bound {
-                if answer_int <= lower_bound {
-                    return Some(ValidationResult::RejectedTooLow);
-                }
+            if let Some(lower_bound) = entry.lower_bound
+                && answer_int <= lower_bound
+            {
+                return Some(ValidationResult::RejectedTooLow);
             }
         }
         if entry.rejected_answers.iter().any(|a| a == answer) {
@@ -123,7 +122,7 @@ where
     if let Some(result) = check_submission_log(day, level, answer) {
         return result;
     }
-    if answer == "" || answer == "0" {
+    if answer.is_empty() || answer == "0" {
         debug!("cowardly refusing to submit the answer of {answer}");
     }
     let mut result;
@@ -146,10 +145,10 @@ pub fn next_unsolved_day() -> i8 {
             if let (Some(part1), Some(part2)) = (
                 submission_log.answers.get(puzzle_key(day, 1).as_str()),
                 submission_log.answers.get(puzzle_key(day, 2).as_str()),
-            ) {
-                if part1.accepted_answer.is_some() && part2.accepted_answer.is_some() {
-                    last_fully_solved_day = day;
-                }
+            ) && part1.accepted_answer.is_some()
+                && part2.accepted_answer.is_some()
+            {
+                last_fully_solved_day = day;
             }
         }
     }

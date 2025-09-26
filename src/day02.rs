@@ -25,10 +25,10 @@ impl Solver for Day1Solver {
                 *counts.entry(ch).or_insert(0) += 1;
             }
             let counts: Vec<_> = counts.into_values().collect();
-            if counts.iter().any(|v| *v == 2) {
+            if counts.contains(&2) {
                 with_two += 1;
             }
-            if counts.iter().any(|v| *v == 3) {
+            if counts.contains(&3) {
                 with_three += 1;
             }
         }

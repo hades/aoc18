@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::error;
 use std::fmt;
 use std::sync::Arc;
+use std::sync::LazyLock;
 use std::sync::RwLock;
 use std::time::Duration;
 
@@ -87,42 +88,42 @@ pub enum ValidationResult {
 }
 
 fn parse_validation_response(text: &str) -> ValidationResult {
-    let patterns = &[
+    static PATTERNS: &[&str; 4] = &[
         "You gave an answer too recently",
         "That's the right answer",
         "your answer is too high",
         "your answer is too low",
     ];
+    static AC: LazyLock<AhoCorasick> = LazyLock::new(|| {
+        AhoCorasick::new(PATTERNS).expect("AhoCorasick automaton for parse_validation_response()")
+    });
+    static TIMEOUT_RE: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r"You have (?:(\d+)m )?(\d+)s left to wait")
+            .expect("Regex compilation for parse_validation_response()")
+    });
     let mut result = ValidationResult::Rejected;
-    // TODO: create automaton statically
-    let ac =
-        AhoCorasick::new(patterns).expect("AhoCorasick automaton for parse_validation_response()");
-    for mat in ac.find_iter(text) {
+    for mat in AC.find_iter(text) {
         result = match mat.pattern().as_usize() {
-            0 => {
-                // TODO: create regex statically
-                let re = Regex::new(r"You have (?:(\d+)m )?(\d+)s left to wait")
-                    .expect("Regex compilation for parse_validation_response()");
-                re.captures(text)
-                    .map_or(ValidationResult::Rejected, |caps| {
-                        let minutes = caps.get(1).map_or(0, |minutes| {
-                            if minutes.len() == 0 {
-                                0
-                            } else {
-                                minutes
-                                    .as_str()
-                                    .parse::<u64>()
-                                    .expect("couldn't parse minutes")
-                            }
-                        });
-                        let seconds = caps.get(2).expect("no group in parsed response");
-                        let seconds = seconds
-                            .as_str()
-                            .parse::<u64>()
-                            .expect("couldn't parse seconds");
-                        ValidationResult::Throttled(Duration::from_secs(seconds + 60 * minutes))
-                    })
-            }
+            0 => TIMEOUT_RE
+                .captures(text)
+                .map_or(ValidationResult::Rejected, |caps| {
+                    let minutes = caps.get(1).map_or(0, |minutes| {
+                        if minutes.is_empty() {
+                            0
+                        } else {
+                            minutes
+                                .as_str()
+                                .parse::<u64>()
+                                .expect("couldn't parse minutes")
+                        }
+                    });
+                    let seconds = caps.get(2).expect("no group in parsed response");
+                    let seconds = seconds
+                        .as_str()
+                        .parse::<u64>()
+                        .expect("couldn't parse seconds");
+                    ValidationResult::Throttled(Duration::from_secs(seconds + 60 * minutes))
+                }),
             1 => ValidationResult::Accepted,
             2 => ValidationResult::RejectedTooHigh,
             3 => ValidationResult::RejectedTooLow,
