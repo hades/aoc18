@@ -18,3 +18,4 @@ toml = "0.9.5"
 [dev-dependencies]
 httptest = "0.16.3"
 test-log = "0.2.18"
+yare = "3.0.0"
