@@ -8,89 +8,6 @@ pub struct PuzzleSolver {
     last_marble: u64,
 }
 
-// Represents a vector with an efficient implementation for "batch insertions", i.e.
-// sequence of insertions at monotonously increasing insert positions.
-// E.g.
-//  [a, b, c, d, e]
-//    insert(1, x)
-//  [a, x, b, c, d, e]
-//    insert(2, y)
-//  [a, x, y, b, c, d, e]
-pub struct BatchedInsertVec<T> {
-    base: Vec<T>,
-    queue: Vec<(usize, T)>,
-}
-
-impl<T> BatchedInsertVec<T> {
-    fn _merge(&mut self) {
-        let mut base_iter = self.base.drain(..);
-        let mut new_base = vec![];
-        let mut queue_iter = self.queue.drain(..).peekable();
-        let mut current_idx = 0usize;
-        loop {
-            // First check if there is a queued insertion at the current index.
-            // In other words, if there exists an insertion at (1, x), we will
-            // process that insertion when we've arrived at index 1 of the
-            // output vector.
-            if let Some((_, item)) =
-                queue_iter.next_if(|(next_queued_idx, _)| *next_queued_idx == current_idx)
-            {
-                new_base.push(item);
-                current_idx += 1;
-                continue;
-            }
-            // Otherwise, continue inserting items from the original base vector.
-            if let Some(item) = base_iter.next() {
-                new_base.push(item);
-                current_idx += 1;
-                continue;
-            }
-            break;
-        }
-        drop(base_iter);
-        self.base = new_base;
-    }
-
-    fn len(&self) -> usize {
-        self.base.len() + self.queue.len()
-    }
-
-    fn insert(&mut self, position: usize, element: T) {
-        // If the insertion queue is not empty, check the monotonicity of the new
-        // insert.
-        let needs_merge = match self.queue.last() {
-            Some((max_queue_position, _)) => *max_queue_position >= position,
-            None => false,
-        };
-        if needs_merge {
-            self._merge();
-        }
-        // Now either the queue has been emptied, or we've checked that position
-        // is greater than the maximum inserted position in the queue.
-
-        // Check if the new position is within the bounds of the insertion range
-        // 0..=len()
-        assert!(position <= self.len());
-
-        // All good, we can insert the operation in the queue.
-        self.queue.push((position, element));
-    }
-
-    fn remove(&mut self, position: usize) -> T {
-        self._merge();
-        self.base.remove(position)
-    }
-}
-
-impl<T> From<Vec<T>> for BatchedInsertVec<T> {
-    fn from(value: Vec<T>) -> Self {
-        Self {
-            base: value,
-            queue: vec![],
-        }
-    }
-}
-
 impl Solver for PuzzleSolver {
     fn presolve(&mut self, input: &str) {
         let re = Regex::new(r"\d+").unwrap();
@@ -102,19 +19,62 @@ impl Solver for PuzzleSolver {
     fn solve_part_one(&mut self) -> String {
         let mut player_scores = vec![0; self.player_count];
         let mut current_player = 0;
-        let mut marbles: BatchedInsertVec<u64> = vec![0].into();
+        let mut marbles_head= vec![0];
+        let mut marbles_tail= vec![];
+        let mut tail_pointer = 0;
         let mut current_marble = 0;
+        let mut marbles_count = 1;
         for marble in 1..=self.last_marble {
             if marble % 23 != 0 {
-                let insert_index = (current_marble + 1) % marbles.len() + 1;
-                marbles.insert(insert_index, marble);
+                let insert_index = (current_marble + 1) % marbles_count + 1;
+                // Insertion for dual-vector representation.
+                //
+                // At this point the array of marbles is as follows:
+                //  [... a b c x y z ...]
+                // Represented by:
+                //  marbles_head: [... a b c]
+                //  marbles_tail: [... x y z ...]
+                //  tail_pointer:      ^
+                //
+                // The goal of this optimisation is to make consequtive localised insertions
+                // and removals efficient.
+                if insert_index > marbles_head.len() {
+                    // If the insertion happens in the tail of the array, we copy the prefix of the
+                    // tail to the head, and push the new element to the end of the head. This
+                    // is O(1) copies as long as insertions are localised and monotonic.
+                    while insert_index > marbles_head.len() {
+                        assert!(tail_pointer < marbles_tail.len());
+                        marbles_head.push(marbles_tail[tail_pointer]);
+                        tail_pointer += 1;
+                    }
+                    marbles_head.push(marble);
+                } else {
+                    // Insertions near the end of the head can also be efficient. However, in this
+                    // particular case we're dealing with monotonic insertions, and we can assume
+                    // that an insertion at the head is always inefficient, so we create a new
+                    // split at the insertion point.
+                    let mut new_tail = Vec::from_iter(marbles_head.drain(insert_index..));
+                    new_tail.extend(&marbles_tail[tail_pointer..]);
+                    marbles_head.truncate(insert_index);
+                    marbles_head.push(marble);
+                    marbles_tail = new_tail;
+                    tail_pointer = 0;
+                }
                 current_marble = insert_index;
+                marbles_count += 1;
             } else {
                 player_scores[current_player] += marble;
-                let remove_index = (current_marble + marbles.len()).wrapping_sub(7) % marbles.len();
-                let removed_marble = marbles.remove(remove_index);
+                let remove_index = (current_marble + marbles_count).wrapping_sub(7) % marbles_count;
+                let removed_marble = if remove_index < marbles_head.len() {
+                    marbles_head.remove(remove_index)
+                } else {
+                    // The removed index will always be >= tail_pointer, meaning that we don't have
+                    // to update the tail_pointer here.
+                    marbles_tail.remove(remove_index - marbles_head.len() + tail_pointer)
+                };
                 current_marble = remove_index;
                 player_scores[current_player] += removed_marble;
+                marbles_count -= 1;
             }
             current_player = (current_player + 1) % self.player_count;
         }
@@ -137,7 +97,6 @@ pub fn solver() -> PuzzleSolver {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use test_log::test;
     use yare::parameterized;
 
     #[parameterized(
