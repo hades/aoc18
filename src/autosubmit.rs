@@ -124,6 +124,7 @@ where
     }
     if answer.is_empty() || answer == "0" {
         debug!("cowardly refusing to submit the answer of {answer}");
+        return ValidationResult::Rejected;
     }
     let mut result;
     loop {
