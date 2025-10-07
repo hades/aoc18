@@ -15,13 +15,16 @@ impl Solver for PuzzleSolver {
             for cell_y in 1usize..=300 {
                 let mut power_level: i64 = (rack_id * cell_y).try_into().unwrap();
                 power_level += self.serial_no;
-                power_level *= { let rack_id: i64 = rack_id.try_into().unwrap(); rack_id };
+                power_level *= {
+                    let rack_id: i64 = rack_id.try_into().unwrap();
+                    rack_id
+                };
                 power_level = (power_level / 100) % 10;
                 power_level -= 5;
 
                 // `power_level` is now the level for the cell (cell_x, cell_y). We want to find
                 // the cumulative power for all cells with x=1..cell_x and y=1..cell_y.
-                
+
                 // Start by storing the current cell's power.
                 self.cumulative_power_levels[(cell_x, cell_y)] = power_level;
 
@@ -29,7 +32,8 @@ impl Solver for PuzzleSolver {
                 // already computed value for cell_y == cell_y - 1
                 if cell_x == 1 {
                     if cell_y > 1 {
-                        self.cumulative_power_levels[(1, cell_y)] += self.cumulative_power_levels[(1, cell_y - 1)];
+                        self.cumulative_power_levels[(1, cell_y)] +=
+                            self.cumulative_power_levels[(1, cell_y - 1)];
                     }
                     continue;
                 }
@@ -37,10 +41,13 @@ impl Solver for PuzzleSolver {
                 // For subsequent rows, we can use the previously computed sums for smaller
                 // subarrays: s(cell_x, cell_y) = v(cell_x, cell_y) + s(cell_x - 1, cell_y) + s(cell_x, cell_y -1) -
                 //                              - s(cell_x - 1, cell_y - 1)
-                self.cumulative_power_levels[(cell_x, cell_y)] += self.cumulative_power_levels[(cell_x - 1, cell_y)];
+                self.cumulative_power_levels[(cell_x, cell_y)] +=
+                    self.cumulative_power_levels[(cell_x - 1, cell_y)];
                 if cell_y > 1 {
-                    self.cumulative_power_levels[(cell_x, cell_y)] += self.cumulative_power_levels[(cell_x, cell_y - 1)];
-                    self.cumulative_power_levels[(cell_x, cell_y)] -= self.cumulative_power_levels[(cell_x - 1, cell_y - 1)];
+                    self.cumulative_power_levels[(cell_x, cell_y)] +=
+                        self.cumulative_power_levels[(cell_x, cell_y - 1)];
+                    self.cumulative_power_levels[(cell_x, cell_y)] -=
+                        self.cumulative_power_levels[(cell_x - 1, cell_y - 1)];
                 }
             }
         }
@@ -51,11 +58,10 @@ impl Solver for PuzzleSolver {
         let mut max_power_level_block = None;
         for block_x in 1..=298 {
             for block_y in 1..=298 {
-                let block_power_level =
-                    self.cumulative_power_levels[(block_x + 2, block_y + 2)] -
-                    self.cumulative_power_levels[(block_x - 1, block_y + 2)] -
-                    self.cumulative_power_levels[(block_x + 2, block_y - 1)] +
-                    self.cumulative_power_levels[(block_x - 1, block_y - 1)];
+                let block_power_level = self.cumulative_power_levels[(block_x + 2, block_y + 2)]
+                    - self.cumulative_power_levels[(block_x - 1, block_y + 2)]
+                    - self.cumulative_power_levels[(block_x + 2, block_y - 1)]
+                    + self.cumulative_power_levels[(block_x - 1, block_y - 1)];
                 if block_power_level > max_power_level {
                     max_power_level = block_power_level;
                     max_power_level_block = Some((block_x, block_y));
@@ -75,11 +81,11 @@ impl Solver for PuzzleSolver {
                     if block_x + block_size > 301 || block_y + block_size > 301 {
                         continue;
                     }
-                    let block_power_level =
-                        self.cumulative_power_levels[(block_x + block_size - 1, block_y + block_size - 1)] -
-                        self.cumulative_power_levels[(block_x - 1, block_y + block_size - 1)] -
-                        self.cumulative_power_levels[(block_x + block_size - 1, block_y - 1)] +
-                        self.cumulative_power_levels[(block_x - 1, block_y - 1)];
+                    let block_power_level = self.cumulative_power_levels
+                        [(block_x + block_size - 1, block_y + block_size - 1)]
+                        - self.cumulative_power_levels[(block_x - 1, block_y + block_size - 1)]
+                        - self.cumulative_power_levels[(block_x + block_size - 1, block_y - 1)]
+                        + self.cumulative_power_levels[(block_x - 1, block_y - 1)];
                     if block_power_level > max_power_level {
                         max_power_level = block_power_level;
                         max_power_level_block = Some((block_x, block_y, block_size));
@@ -93,7 +99,10 @@ impl Solver for PuzzleSolver {
 }
 
 pub fn solver() -> PuzzleSolver {
-    PuzzleSolver { serial_no: 0, cumulative_power_levels: Array2D::filled_with(0, 301, 301) }
+    PuzzleSolver {
+        serial_no: 0,
+        cumulative_power_levels: Array2D::filled_with(0, 301, 301),
+    }
 }
 
 #[cfg(test)]

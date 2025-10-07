@@ -19,8 +19,8 @@ impl Solver for PuzzleSolver {
     fn solve_part_one(&mut self) -> String {
         let mut player_scores = vec![0; self.player_count];
         let mut current_player = 0;
-        let mut marbles_head= vec![0];
-        let mut marbles_tail= vec![];
+        let mut marbles_head = vec![0];
+        let mut marbles_tail = vec![];
         let mut tail_pointer = 0;
         let mut current_marble = 0;
         let mut marbles_count = 1;

@@ -13,7 +13,11 @@ pub struct PuzzleSolver {
 
 fn diameter(positions: &[(i64, i64)]) -> i64 {
     let first = positions[0];
-    positions.iter().map(|(x, y)| (first.0 - x).abs() + (first.1 - y).abs()).max().unwrap()
+    positions
+        .iter()
+        .map(|(x, y)| (first.0 - x).abs() + (first.1 - y).abs())
+        .max()
+        .unwrap()
 }
 
 fn print_screen(positions: &Vec<(i64, i64)>) {
@@ -23,16 +27,28 @@ fn print_screen(positions: &Vec<(i64, i64)>) {
     let end_y = positions.iter().map(|(_, y)| *y).max().unwrap();
     let set: HashSet<_> = HashSet::from_iter(positions);
     for y in start_y..=end_y {
-        info!("> {}", String::from_iter((start_x..=end_x).map(|x| if set.contains(&(x, y)) { '#' } else { '.' })));
+        info!(
+            "> {}",
+            String::from_iter((start_x..=end_x).map(|x| if set.contains(&(x, y)) {
+                '#'
+            } else {
+                '.'
+            }))
+        );
     }
 }
 
 impl Solver for PuzzleSolver {
     fn presolve(&mut self, input: &str) {
-        let re = Regex::new(r"position=<\s*([-0-9]+),\s*([-0-9]+)> velocity=<\s*([-0-9]+),\s*([-0-9]+)>").unwrap();
+        let re = Regex::new(
+            r"position=<\s*([-0-9]+),\s*([-0-9]+)> velocity=<\s*([-0-9]+),\s*([-0-9]+)>",
+        )
+        .unwrap();
         for (_, [px, py, vx, vy]) in re.captures_iter(input).map(|capture| capture.extract()) {
-            self.initial_positions.push((px.parse().unwrap(), py.parse().unwrap()));
-            self.velocities.push((vx.parse().unwrap(), vy.parse().unwrap()));
+            self.initial_positions
+                .push((px.parse().unwrap(), py.parse().unwrap()));
+            self.velocities
+                .push((vx.parse().unwrap(), vy.parse().unwrap()));
         }
     }
 
