@@ -11,9 +11,13 @@ mod day08;
 mod day09;
 mod day10;
 mod day11;
+mod day12;
 mod solver;
 
-use std::env;
+use std::{
+    env,
+    time::{Duration, Instant},
+};
 
 use autosubmit::next_unsolved_day;
 use clap::Parser;
@@ -49,8 +53,15 @@ fn solver_for_day(day: i8) -> Option<Box<dyn Solver>> {
         9 => Some(Box::new(day09::solver())),
         10 => Some(Box::new(day10::solver())),
         11 => Some(Box::new(day11::solver())),
+        12 => Some(Box::new(day12::solver())),
         _ => None,
     }
+}
+
+fn timeit<T, F: FnOnce() -> T>(f: F) -> (T, Duration) {
+    let start = Instant::now();
+    let result = f();
+    (result, start.elapsed())
 }
 
 fn main() {
@@ -89,8 +100,8 @@ fn main() {
             solver.presolve(input.as_str());
             if !args.part_two_only {
                 log::info!("solving part one...");
-                let answer = solver.solve_part_one();
-                log::info!("part one answer: {answer}");
+                let (answer, part_one_time) = timeit(|| solver.solve_part_one());
+                log::info!("part one solved in {part_one_time:?}, answer: {answer}");
                 if args.submit {
                     log::info!("submitting part one...");
                     let result =
@@ -101,8 +112,8 @@ fn main() {
                 }
             }
             log::info!("solving part two...");
-            let answer = solver.solve_part_two();
-            log::info!("part two answer: {answer}");
+            let (answer, part_two_time) = timeit(|| solver.solve_part_two());
+            log::info!("part two solved in {part_two_time:?}, answer: {answer}");
             if args.submit {
                 log::info!("submitting part two...");
                 let result = autosubmit::submit_with_cache(day, 2, answer.as_str(), |d, l, a| {
