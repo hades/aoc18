@@ -1,7 +1,5 @@
 use std::collections::{BTreeSet, HashMap};
 
-use log::debug;
-
 use crate::solver::Solver;
 
 #[derive(Default)]
@@ -52,14 +50,14 @@ impl Coords {
         mut predicate: F,
         limit: usize,
     ) -> (usize, BTreeSet<(Coords, Option<Coords>)>) {
-        let mut front = vec![(self.clone(), None::<Coords>)];
+        let mut front = BTreeSet::from_iter([(self.clone(), None::<Coords>)]);
         let mut visited: BTreeSet<Coords> = BTreeSet::new();
         let mut distance = 0;
         while !front.is_empty() && !front.iter().any(|(c, _)| predicate(c)) {
             if distance > limit {
                 return (usize::MAX, BTreeSet::new());
             }
-            let mut new_front = vec![];
+            let mut new_front = BTreeSet::new();
             for (c, first_step) in front {
                 visited.insert(c.clone());
                 new_front.extend(
@@ -129,7 +127,6 @@ impl PuzzleSolver {
         };
         let mut rounds = 0;
         'outerloop: loop {
-            debug!("{rounds}");
             let mut act_order: Vec<_> = positions
                 .iter()
                 .filter_map(|(coords, unit_ref)| {
@@ -191,7 +188,6 @@ impl PuzzleSolver {
                         let next_step = space_to_move_to.1.unwrap();
                         *positions.get_mut(&next_step).unwrap() = Some(unit_ref);
                         *positions.get_mut(&coords).unwrap() = None;
-                        //debug!("{coords:?} -> {next_step:?}");
                         coords = next_step;
                     }
                 }
@@ -206,7 +202,6 @@ impl PuzzleSolver {
                     .collect();
                 targets.sort_by_key(|c| (units[positions[c].unwrap()].hp, c.clone()));
                 if let Some(enemy_position) = targets.first() {
-                    //debug!("{coords:?} => {enemy_position:?}");
                     let enemy_ref = positions[enemy_position].unwrap();
                     let attack_power = match faction {
                         Faction::Elf => elf_attack_power,
