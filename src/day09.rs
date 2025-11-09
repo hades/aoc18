@@ -36,7 +36,7 @@ impl Solver for PuzzleSolver {
                 //  marbles_tail: [... x y z ...]
                 //  tail_pointer:      ^
                 //
-                // The goal of this optimisation is to make consequtive localised insertions
+                // The goal of this optimisation is to make consecutive localised insertions
                 // and removals efficient.
                 if insert_index > marbles_head.len() {
                     // If the insertion happens in the tail of the array, we copy the prefix of the

@@ -42,8 +42,8 @@ impl Solver for PuzzleSolver {
                 .flat_map(|(a, b)| [a.as_str(), b.as_str()].into_iter()),
         );
         let all_nodes = ready.clone();
-        self.input.iter().for_each(|(_, dependant)| {
-            ready.remove(&dependant.as_str());
+        self.input.iter().for_each(|(_, dependent)| {
+            ready.remove(&dependent.as_str());
         });
         let mut operation_order = vec![];
         while let Some(next) = ready.pop_first() {
@@ -55,7 +55,7 @@ impl Solver for PuzzleSolver {
                     .filter(|&&node| {
                         remaining_edges
                             .iter()
-                            .filter(|(_, dependant)| dependant.as_str() == node)
+                            .filter(|(_, dependent)| dependent.as_str() == node)
                             .count()
                             == 0
                     })
@@ -78,7 +78,7 @@ impl Solver for PuzzleSolver {
         for node in all_nodes.iter().cloned() {
             if remaining_edges
                 .iter()
-                .filter(|(_, dependant)| dependant.as_str() == node)
+                .filter(|(_, dependent)| dependent.as_str() == node)
                 .count()
                 == 0
                 && let Some(next_free_worker) = worker_jobs.iter_mut().find(|job| job.is_none())
@@ -111,7 +111,7 @@ impl Solver for PuzzleSolver {
                 }
                 if remaining_edges
                     .iter()
-                    .filter(|(_, dependant)| dependant.as_str() == node)
+                    .filter(|(_, dependent)| dependent.as_str() == node)
                     .filter(|(dependency, _)| !finished_nodes.contains(dependency.as_str()))
                     .count()
                     == 0

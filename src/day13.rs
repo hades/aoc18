@@ -178,7 +178,7 @@ mod tests {
     fn provided_example_1() {
         let mut s = solver();
         s.presolve(
-            r"/->-\        
+            r"/->-\
 |   |  /----\
 | /-+--+-\  |
 | | |  | v  |
@@ -192,8 +192,8 @@ mod tests {
     fn provided_example_2() {
         let mut s = solver();
         s.presolve(
-            r"/>-<\  
-|   |  
+            r"/>-<\
+|   |
 | /<+-\
 | | | v
 \>+</ |
